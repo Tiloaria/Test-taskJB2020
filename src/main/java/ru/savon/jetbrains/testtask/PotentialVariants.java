@@ -2,18 +2,20 @@ package ru.savon.jetbrains.testtask;
 
 import ru.savon.jetbrains.testtask.exceptions.IncorrectDataException;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
 
 public class PotentialVariants {
     private static class EndVariant {
         int myEndTime;
         int myAmountOfMoney;
+        EndVariant myPreviousEnd;
+        Train myTrain;
 
-        public EndVariant(int endTime, int amountOfMoney) {
+        public EndVariant(int endTime, int amountOfMoney, EndVariant previousEnd, Train train) {
             myEndTime = endTime;
             myAmountOfMoney = amountOfMoney;
+            myPreviousEnd = previousEnd;
+            myTrain = train;
         }
     }
 
@@ -49,7 +51,7 @@ public class PotentialVariants {
      * @param trains list of incoming trains
      */
     public PotentialVariants(List<Train> trains) {
-        bestIncomeToTime.add(new EndVariant(0, 0));
+        bestIncomeToTime.add(new EndVariant(0, 0, null, null));
         trains.sort(Comparator.comparingInt(c -> c.myStartTime));
         for (Train train : trains) {
             addPeriodWithSum(train);
@@ -64,10 +66,14 @@ public class PotentialVariants {
      */
     void addPeriodWithSum(Train train) {
         //Will find the best result which can be continued with this current train
-        EndVariant candidateForPrevious = bestIncomeToTime.floor(new EndVariant(train.myStartTime, 0));
+        EndVariant candidateForPrevious = bestIncomeToTime.floor(new EndVariant(train.myStartTime, 0, null, train));
         //candidateForPrevious must exist because there is (0, 0) as Base
         assert candidateForPrevious != null;
-        EndVariant curRes = new EndVariant(train.getEndTime(), train.myAmountOfMoney + candidateForPrevious.myAmountOfMoney);
+        EndVariant curRes = new EndVariant(
+                train.getEndTime(),
+                train.myAmountOfMoney + candidateForPrevious.myAmountOfMoney,
+                candidateForPrevious,
+                train);
         EndVariant previousEnd = bestIncomeToTime.floor(curRes);
         assert previousEnd != null;
         if (previousEnd.myAmountOfMoney < curRes.myAmountOfMoney) {
@@ -83,5 +89,16 @@ public class PotentialVariants {
     public int getBestSalary() {
         EndVariant bestVariant = bestIncomeToTime.last();
         return bestVariant.myAmountOfMoney;
+    }
+
+    public Set<Integer> getBestTrains() {
+        EndVariant curVariant = bestIncomeToTime.last();
+        Set<Integer> bestTrains = new HashSet<Integer>();
+        //stop when curVariant approve Base Train
+        while (curVariant.myTrain != null) {
+            bestTrains.add(curVariant.myTrain.myTrainNum);
+            curVariant = curVariant.myPreviousEnd;
+        }
+        return bestTrains;
     }
 }

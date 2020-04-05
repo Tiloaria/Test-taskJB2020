@@ -4,7 +4,9 @@ import org.junit.Test;
 import ru.savon.jetbrains.testtask.exceptions.IncorrectDataException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 import static ru.savon.jetbrains.testtask.PotentialVariants.Train;
@@ -49,5 +51,17 @@ public class PotentialVariantsTest {
     @Test(expected = IncorrectDataException.class)
     public void incorrectTrainData() throws IncorrectDataException {
         new Train(1, -1, 3, 3);
+    }
+
+    @Test
+    public void bestTrainsShuffle() throws IncorrectDataException {
+        List<Train> list = new ArrayList<>();
+        list.add(new Train(1, 4, 3, 3));
+        list.add(new Train(2, 2, 2, 2));
+        list.add(new Train(3, 1, 2, 3));
+        list.add(new Train(4, 5, 2, 2));
+        list.add(new Train(5, 2, 2, 1));
+        PotentialVariants variants = new PotentialVariants(list);
+        assertEquals(Set.of(1, 3), variants.getBestTrains());
     }
 }
